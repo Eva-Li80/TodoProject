@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { Todo } from "../type"
-
+import { Todo } from "../type";
 
 const TodoList: React.FC = () => {
   const [todos, setTodos] = useState<Todo[]>([]);
-  const [newTodo, setNewTodo] = useState("");
+  const [newTodoName, setNewTodoName] = useState("");
+  const [newTodoContent, setNewTodoContent] = useState("");
 
   useEffect(() => {
     const fetchTodos = async () => {
@@ -24,26 +24,23 @@ const TodoList: React.FC = () => {
 
   const handleAddTodo = async () => {
     try {
-      if (newTodo.trim() !== "") {
-        // Skapa ett nytt todo-objekt med titeln
+      if (newTodoName.trim() !== "") {
         const todoToAdd: Todo = {
-          id: 0, // Vi behöver inte skicka id eftersom det genereras av servern
-          title: newTodo,
-          content: "",
+          id: 0, 
+          title: newTodoName,
+          content: newTodoContent,
           completed: false,
         };
 
-        // Skicka POST-förfrågan med det nya todo-objektet
         const response = await axios.post<Todo>(
           "http://localhost:5100/api/todos",
           todoToAdd
         );
 
-        // Uppdatera state med den nya todo som returneras från servern
         setTodos([...todos, response.data]);
+        setNewTodoName("");
+        setNewTodoContent("");
       }
-      // Återställ input-fältet
-      setNewTodo("");
     } catch (error) {
       console.error("Error adding todo:", error);
     }
@@ -58,17 +55,49 @@ const TodoList: React.FC = () => {
       console.error("Error removing todo:", error);
     }
   };
-  
-  
+
+  const handleUpdateTodo = async (id: number) => {
+    try {
+      const updatedTodo: Todo = {
+        id: id,
+        title: newTodoName, 
+        content: newTodoContent, 
+        completed: false
+      };
+
+      const response = await axios.put<Todo>(
+        `http://localhost:5100/api/todos/${id}`,
+        updatedTodo
+      );
+
+      const updatedTodos = todos.map(todo => {
+        if (todo.id === id) {
+          return response.data; 
+        }
+        return todo;
+      });
+
+      setTodos(updatedTodos);
+      console.log(`Todo with ID ${id} updated successfully.`);
+    } catch (error) {
+      console.error("Error updating todo:", error);
+    }
+  };
 
   return (
     <div>
       <h1>Todo List</h1>
       <input
         type="text"
-        value={newTodo}
-        onChange={(e) => setNewTodo(e.target.value)}
-        placeholder="Enter a new todo"
+        value={newTodoName}
+        onChange={(e) => setNewTodoName(e.target.value)}
+        placeholder="Enter a new todo title"
+      />
+      <input
+        type="text"
+        value={newTodoContent}
+        onChange={(e) => setNewTodoContent(e.target.value)}
+        placeholder="Enter a new todo content"
       />
       <button onClick={handleAddTodo}>Add Todo</button>
       <ul>
@@ -76,7 +105,7 @@ const TodoList: React.FC = () => {
           <li key={todo.id}>
             {todo.title} - {todo.content} - {todo.completed ? "Completed" : "Not Completed"}
             <button onClick={() => handleRemoveTodo(todo.id)}>Remove</button>
-
+            <button onClick={() => handleUpdateTodo(todo.id)}>Update</button>
           </li>
         ))}
       </ul>

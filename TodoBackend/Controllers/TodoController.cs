@@ -36,21 +36,16 @@ public class TodosController : ControllerBase
                 return BadRequest("Invalid todo object.");
             }
 
-            // Generera ett unikt ID för den nya todo
             todo.Id = _todos.Count + 1;
 
-            // Lägg till den nya todo i listan
             _todos.Add(todo);
 
-            // Logga att en ny todo har skapats
             _logger.LogInformation($"Created new todo with ID: {todo.Id}");
 
-            // Returnera status 201 Created tillsammans med den nya todo
             return CreatedAtAction(nameof(GetTodoById), new { id = todo.Id }, todo);
         }
         catch (Exception ex)
         {
-            // Logga eventuella fel som uppstår
             _logger.LogError($"An error occurred while creating the todo: {ex.Message}");
             return StatusCode(500, "An error occurred while processing your request.");
         }
@@ -81,6 +76,25 @@ public class TodosController : ControllerBase
         _logger.LogInformation($"Deleted todo with ID: {id}");
         return NoContent();
     }
+
+
+    [HttpPut("{id}")]
+    public IActionResult UpdateTodo(int id, Todo updatedTodo)
+    {
+
+        var existingTodo = _todos.FirstOrDefault(t => t.Id == id);
+        if (existingTodo == null)
+        {
+            return NotFound($"Todo with ID {id} not found.");
+        }
+
+        existingTodo.Title = updatedTodo.Title;
+        existingTodo.Content = updatedTodo.Content;
+        existingTodo.Completed = updatedTodo.Completed;
+
+
+        return Ok(existingTodo);
+    }
+
+
 }
-
-
